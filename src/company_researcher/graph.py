@@ -36,3 +36,4 @@ workflow.add_edge('write', END)
 workflow.set_entry_point('ground')
 
 graph = workflow.compile()
+graph.name = "Tavily Company Researcher"
