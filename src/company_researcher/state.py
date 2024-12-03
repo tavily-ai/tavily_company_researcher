@@ -1,9 +1,9 @@
 from pydantic import BaseModel, Field
-from typing import Dict, Union, List, Annotated, Literal
+from typing import Dict, Union, List, Annotated
 from langchain_core.messages import AnyMessage
 from langgraph.graph import add_messages
 
-from src.nodes.cluster import Cluster
+from company_researcher.nodes.cluster import Cluster
 
 class InputState(BaseModel):
     company: str = Field(

@@ -1,5 +1,0 @@
-langchain_core
-langchain-openai
-langgraph
-tavily-python
-pydantic
