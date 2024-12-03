@@ -6,13 +6,13 @@ class Tavily:
     def __init__(self):
         self.client = AsyncTavilyClient()
 
-    async def extract(self, urls: list[str], sources_dict: dict):
+    async def extract(self, urls: list[str], sources_dict: dict, extract_depth="basic"):
         msg = ""
 
         async def process_batch(url_batch):
             batch_msg = ""
             try:
-                response = await self.client.extract(urls=url_batch)
+                response = await self.client.extract(urls=url_batch, extract_depth=extract_depth)
                 for itm in response['results']:
                     url = itm['url']
                     raw_content = itm['raw_content']

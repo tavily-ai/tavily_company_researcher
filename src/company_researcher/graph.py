@@ -8,7 +8,7 @@ from company_researcher.utils.all import Utils
 cfg = Config()
 utils = Utils()
 
-# Initialize src
+# Initialize agents
 ground_agent = GroundAgent(cfg, utils)
 research_agent = ResearchAgent(cfg, utils)
 cluster_agent = ClusterAgent(cfg, utils)
@@ -18,7 +18,7 @@ write_agent = WriteAgent(cfg, utils)
 # Define a Langchain graph
 workflow = StateGraph(ResearchState, input=InputState, output=OutputState)
 
-# Add src for each company_researcher
+# Add node for each agent
 workflow.add_node('ground', ground_agent.run)
 workflow.add_node('research', research_agent.run)
 workflow.add_node('cluster', cluster_agent.run)
@@ -36,3 +36,4 @@ workflow.add_edge('write', END)
 workflow.set_entry_point('ground')
 
 graph = workflow.compile()
+graph.name = "Tavily Company Researcher"
