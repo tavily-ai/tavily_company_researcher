@@ -3,7 +3,7 @@ from typing import Dict, Union, List, Annotated, Literal
 from langchain_core.messages import AnyMessage
 from langgraph.graph import add_messages
 
-from src.nodes.cluster import Cluster
+from agent.nodes.cluster import Cluster
 
 class InputState(BaseModel):
     company: str = Field(

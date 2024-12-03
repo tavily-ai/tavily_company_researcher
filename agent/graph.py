@@ -1,14 +1,14 @@
 from langgraph.graph import StateGraph, END
 
-from src.config import Config
-from src.state import InputState, OutputState, ResearchState
-from src.nodes import GroundAgent, ResearchAgent, ClusterAgent, EnrichAgent, WriteAgent
-from src.utils.all import Utils
+from agent.config import Config
+from agent.state import InputState, OutputState, ResearchState
+from agent.nodes import GroundAgent, ResearchAgent, ClusterAgent, EnrichAgent, WriteAgent
+from agent.utils.all import Utils
 
 cfg = Config()
 utils = Utils()
 
-# Initialize src
+# Initialize agent
 ground_agent = GroundAgent(cfg, utils)
 research_agent = ResearchAgent(cfg, utils)
 cluster_agent = ClusterAgent(cfg, utils)
@@ -18,7 +18,7 @@ write_agent = WriteAgent(cfg, utils)
 # Define a Langchain graph
 workflow = StateGraph(ResearchState, input=InputState, output=OutputState)
 
-# Add src for each agent
+# Add agent for each agent
 workflow.add_node('ground', ground_agent.run)
 workflow.add_node('research', research_agent.run)
 workflow.add_node('cluster', cluster_agent.run)

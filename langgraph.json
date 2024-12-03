@@ -1,6 +1,6 @@
 {
   "graphs": {
-    "agent": "./src/graph.py:graph"
+    "agent": "./agent/graph.py:graph"
   },
   "env": ".env",
   "dependencies": [
