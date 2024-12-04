@@ -13,7 +13,8 @@ dependencies = [
     "langchain-openai",
     "langgraph",
     "tavily-python",
-    "pydantic"
+    "pydantic",
+    "cohere"
 ]
 
 [project.optional-dependencies]

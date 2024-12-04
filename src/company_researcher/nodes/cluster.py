@@ -1,7 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import List
 from langchain_core.messages import AnyMessage, AIMessage, SystemMessage, HumanMessage, ToolMessage
-import time
 
 class Cluster(BaseModel):
     company_name: str = Field(
@@ -78,29 +77,27 @@ class ClusterAgent:
             clusters = response.clusters  # Access the structured clusters directly
             return clusters, ""
         except Exception as e:
-            msg = f"🚫 Error clustering: {str(e)}\n"
+            msg = f"🚫 Error accrued during clustering: {str(e)}\n"
             clusters = []
             return clusters, msg
 
     # Define the function to automatically choose the correct cluster, can add in the future manual selection support
     async def choose_cluster(self, company_url, clusters):
         chosen_cluster = 0
+        msg = ""
         for index, cluster in enumerate(clusters):
             # Check if any URL in the cluster starts with the company URL
             if any(company_url in url for url in cluster.urls):
                 chosen_cluster = index
                 break
-
-        cluster = clusters[chosen_cluster]
-        msg = f"Automatically selected cluster for '{company_url}' as {cluster.company_name}.\n"
+        if clusters:
+            cluster = clusters[chosen_cluster]
+            msg = f"Automatically selected cluster: {cluster.company_name}.\n"
         return chosen_cluster, msg
 
 
     async def run(self, state):
         msg = "📊 Beginning clustering process...\n"
-        start = time.time()
         clusters, cluster_msg = await self.cluster(state.company, state.company_url, state.grounding_data, state.research_data)
-        end = time.time()
-        print("clustering response time: ", end-start)
         chosen_cluster, choose_msg = await self.choose_cluster(state.company_url, clusters)
         return {"clusters": clusters, "chosen_cluster": chosen_cluster, "messages": msg + cluster_msg + choose_msg}
