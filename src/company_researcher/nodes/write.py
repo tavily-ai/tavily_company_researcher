@@ -70,7 +70,6 @@ class WriteAgent:
         {documents_section}
         """
         prompt = prompt[:self.cfg.MAX_PROMPT_LENGTH]
-        print(prompt)
         try:
             messages = [SystemMessage(content=prompt)]
             response = await self.cfg.model.ainvoke(messages)
