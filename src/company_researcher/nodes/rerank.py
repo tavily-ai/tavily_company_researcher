@@ -43,6 +43,10 @@ class RerankAgent:
         try:
             # Perform reranking
             query = f"Company {state.company}"
+            if state.include:
+                query += " " + " ".join(state.include)
+            if self.cfg.DEBUG:
+                print("Reranking query: ", query)
             documents = [result["content"] for result in data]
             top_n = self.cfg.DEFAULT_CLUSTER_SIZE
             timeout = self.cfg.RERANK_TIMEOUT

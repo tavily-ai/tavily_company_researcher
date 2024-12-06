@@ -1,3 +1,4 @@
+import json
 from pydantic import BaseModel, Field
 from typing import List
 from langchain_core.messages import AnyMessage, AIMessage, SystemMessage, HumanMessage, ToolMessage
@@ -20,57 +21,65 @@ class ClusterAgent:
         self.cfg = cfg
         self.utils = utils
 
-    async def cluster(self, company, company_url, grounding_data, research_data):
-        target_domain = company_url.split("//")[-1].split("/")[0]
-        prompt = f"""
-                We conducted a search for a company called '{company}', but the results may include documents from other companies with similar names or domains.
-                Your task is to accurately categorize these retrieved documents based on which specific company they pertain to, using the initial company information as "ground truth."
+    async def cluster(self, state):
+        target_domain = state.company_url.split("//")[-1].split("/")[0]
 
-                ### Target Company Information
-                - **Company Name**: '{company}'
-                - **Primary Domain**: '{target_domain}'
-                - **Initial Context (Ground Truth)**: Information below should act as a verification baseline. Use it to confirm that the document content aligns directly with {company}.
-                - **{grounding_data}**
+        prompt = (
+            f"We conducted a search for a company called '{state.company}', but the results may include documents from other companies with similar names or domains.\n"
+            f"Your task is to accurately categorize these retrieved documents based on which specific company they pertain to, using the initial company information as 'ground truth.'\n\n"
+            f"### Target Company Information\n"
+            f"- **Company Name**: '{state.company}'\n"
+            f"- **Primary Domain**: '{target_domain}'\n"
+            f"- **Initial Context (Ground Truth)**: Information below should act as a verification baseline. Use it to confirm that the document content aligns directly with {state.company}.\n"
+            f"- **{json.dumps(state.grounding_data)[:self.cfg.MAX_GROUND_LENGTH]}**\n\n"
+            f"### Retrieved Documents for Clustering\n"
+            f"Below are the retrieved documents, including URLs and brief content snippets:\n"
+            f"{[{'url': doc['url'], 'snippet': doc['content']} for doc in state.research_data.values()]}\n\n"
+            f"### Clustering Instructions\n"
+            f"- **Primary Domain Priority**: Documents with URLs containing '{target_domain}' should be prioritized for the main cluster for '{state.company}'.\n"
+            f"- **Include Relevant Third-Party Sources**: Documents from third-party domains (e.g., news sites, industry reports) should also be included in the '{state.company}' cluster if they provide specific information about '{state.company}', reference '{target_domain}', or closely match the initial company context.\n"
+        )
 
-                ### Retrieved Documents for Clustering
-                Below are the retrieved documents, including URLs and brief content snippets:
-                {[{'url': doc['url'], 'snippet': doc['content']} for doc in research_data.values()]}
+        if state.include:
+            prompt += (
+                f"- **Trusted Sources Inclusion**: If possible, trusted sources that include the following information should be added to the main cluster:\n"
+                f"{', '.join(state.include)}.\n"
+            )
 
-                ### Clustering Instructions
-                - **Primary Domain Priority**: Documents with URLs containing '{target_domain}' should be prioritized for the main cluster for '{company}'.
-                - **Include Relevant Third-Party Sources**: Documents from third-party domains (e.g., news sites, industry reports) should also be included in the '{company}' cluster if they provide specific information about '{company}', reference '{target_domain}', or closely match the initial company context.
-                - **Separate Similar But Distinct Domains**: Documents from similar but distinct domains (e.g., '{target_domain.replace('.com', '.io')}') should be placed in separate clusters unless they explicitly reference the target domain and align with the company's context.
-                - **Handle Ambiguities Separately**: Documents that lack clear alignment with '{company}' should be placed in an "Ambiguous" cluster for further review.
-
-                ### Example Output Format
-                {{
-                    "clusters": [
-                        {{
-                            "company_name": "Name of Company A",
-                            "urls": [
-                                "http://example.com/doc1",
-                                "http://example.com/doc2"
-                            ]
-                        }},
-                        {{
-                            "company_name": "Name of Company B",
-                            "urls": [
-                                "http://example.com/doc3"
-                            ]
-                        }},
-                        {{
-                            "company_name": "Ambiguous",
-                            "urls": [
-                                "http://example.com/doc4"
-                            ]
-                        }}
-                    ]
-                }}
-
-                ### Key Points
-                - **Focus on Relevant Content**: Documents that contain relevant references to '{company}' (even from third-party domains) should be clustered with '{company}' if they align well with the initial information and context provided.
-                - **Identify Ambiguities**: Any documents without clear relevance to '{company}' should be placed in the "Ambiguous" cluster for manual review.
-            """
+        prompt += (
+            f"- **Separate Similar But Distinct Domains**: Documents from similar but distinct domains (e.g., '{target_domain.replace('.com', '.io')}') should be placed in separate clusters unless they explicitly reference the target domain and align with the company's context.\n"
+            f"- **Handle Ambiguities Separately**: Documents that lack clear alignment with '{state.company}' should be placed in an 'Ambiguous' cluster for further review.\n\n"
+            f"### Example Output Format\n"
+            f"{{\n"
+            f"    'clusters': [\n"
+            f"        {{\n"
+            f"            'company_name': 'Name of Company A',\n"
+            f"            'urls': [\n"
+            f"                'http://example.com/doc1',\n"
+            f"                'http://example.com/doc2'\n"
+            f"            ]\n"
+            f"        }},\n"
+            f"        {{\n"
+            f"            'company_name': 'Name of Company B',\n"
+            f"            'urls': [\n"
+            f"                'http://example.com/doc3'\n"
+            f"            ]\n"
+            f"        }},\n"
+            f"        {{\n"
+            f"            'company_name': 'Ambiguous',\n"
+            f"            'urls': [\n"
+            f"                'http://example.com/doc4'\n"
+            f"            ]\n"
+            f"        }}\n"
+            f"    ]\n"
+            f"}}\n\n"
+            f"### Key Points\n"
+            f"- **Focus on Relevant Content**: Documents that contain relevant references to '{state.company}' (even from third-party domains) should be clustered with '{state.company}' if they align well with the initial information and context provided.\n"
+            f"- **Identify Ambiguities**: Any documents without clear relevance to '{state.company}' should be placed in the 'Ambiguous' cluster for manual review.\n"
+        )
+        prompt = prompt[:self.cfg.MAX_PROMPT_LENGTH]
+        if self.cfg.DEBUG:
+            print(prompt)
         try:
             messages = [SystemMessage(content=prompt)]
             response = await self.cfg.model.with_structured_output(Clusters).ainvoke(messages)
@@ -92,12 +101,18 @@ class ClusterAgent:
                 break
         if clusters:
             cluster = clusters[chosen_cluster]
-            msg = f"Automatically selected cluster: {cluster.company_name}.\n"
+            msg = f"Automatically selected cluster: {cluster.company_name} with the following urls: {cluster.urls}\n"
         return chosen_cluster, msg
 
 
     async def run(self, state):
         msg = "📊 Beginning clustering process...\n"
-        clusters, cluster_msg = await self.cluster(state.company, state.company_url, state.grounding_data, state.research_data)
+        if self.cfg.DEBUG:
+            print(msg)
+        clusters, cluster_msg = await self.cluster(state)
+        if self.cfg.DEBUG:
+            print(cluster_msg)
         chosen_cluster, choose_msg = await self.choose_cluster(state.company_url, clusters)
+        if self.cfg.DEBUG:
+            print(choose_msg)
         return {"clusters": clusters, "chosen_cluster": chosen_cluster, "messages": msg + cluster_msg + choose_msg}
