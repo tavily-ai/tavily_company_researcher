@@ -14,7 +14,9 @@ class ResearchAgent:
 
     async def generate_queries(self, state):
         try:
-            msg = f"🤔 Generating search queries based on grounding data...\n{state.include}"
+            msg = f"🤔 Generating search queries based on grounding data...\n"
+            if self.cfg.DEBUG:
+                print(msg)
             prompt = (
                 f"You are an expert company researcher specializing in generating company analysis reports.\n"
                 f"Your task is to generate up to {self.cfg.MAX_SEARCH_QUERIES} precise **web search queries** to thoroughly understand the company: '{state.company}'.\n\n"
@@ -28,8 +30,10 @@ class ResearchAgent:
             if state.include:
                 prompt += (
                     f"### Required Information to Include:\n"
-                    f"You are tasked with ensuring the following specific types of information are covered in the report, as specified by the user:\n"
-                    f"{', '.join(state.include)}\n\n"
+                    f"- You are tasked with ensuring the following specific types of information are covered in the report, as specified by the user:\n"
+                    f"{', '.join(state.include)}\n"
+                    # f"- Prioritize missing information: Check the grounding data and identify any missing elements from the required information to include.\n"
+                    f"- Generate a search query only for the information that is missing from the provided grounding data.\n"
                 )
 
             prompt += (
@@ -39,10 +43,10 @@ class ResearchAgent:
                 f"### Additional Guidance:\n"
             )
 
-            if state.include:
-                prompt += (
-                    f"- Prioritize missing information: Check the grounding data and identify any missing elements from the required information to include.\n"
-                )
+            # if state.include:
+            #     prompt += (
+            #         f"- Prioritize missing information: Check the grounding data and identify any missing elements from the required information to include.\n"
+            #     )
 
             prompt += (
                 f"- Ensure each query incorporates **specific keywords** derived from the grounding data, such as the company's name, key products or services, leadership titles, geographical locations, and other unique identifiers, to allow the search engine to retrieve the most relevant sources specific to the company you are researching.\n"
@@ -51,9 +55,10 @@ class ResearchAgent:
                 f"- Avoid redundancy: Each query should focus on unique information to retrieve relevant details efficiently. For example, there should be only one query to search for the company's CEO name.\n"
 
             )
-
+            if self.cfg.DEBUG:
+                print(prompt)
             messages = [SystemMessage(content=prompt)]
-            response = await self.cfg.model.with_structured_output(TavilySearchInput).ainvoke(messages)
+            response = await self.cfg.BASE_LLM.with_structured_output(TavilySearchInput).ainvoke(messages)
             return response.sub_queries, msg
         except Exception as e:
             msg = f"🚫 An error occurred during search queries generation: {str(e)}"
