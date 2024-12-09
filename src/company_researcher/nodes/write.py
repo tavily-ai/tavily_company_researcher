@@ -33,7 +33,7 @@ class WriteAgent:
         prompt += (
             "- Make sure to support specific data points and metrics included in the report with in-text Markdown hyperlink citations.\n\n"
             f"### Report Structure:\n"
-            f"Title (utilize the full company name): {report_title}\n"
+            f"Title: {report_title}\n"
             f"Date: {report_date}\n"
             f"1. **Executive Summary**:\n"
             f"    - High-level overview of the company, its services, location, employee count, and achievements.\n"
@@ -49,18 +49,22 @@ class WriteAgent:
             f"    - For startups: funding rounds, investors, and milestones.\n\n"
             f"5. **Recent Developments**:\n"
             f"    - New product enhancements, partnerships, competitive moves, or market entries.\n\n"
+            f"6. **Competitive Landscape**:\n"
+            f"    - Overview of major competitors and their positioning in the market.\n"
+            f"    - Compare key differentiators, market share, pricing, and product/service features.\n"
+            f"    - Include relevant competitor developments that impact the company’s strategy.\n\n"
         )
         if state.include:
             prompt += (
-            f"6. (Optional) **Additional Information**:\n"
+            f"7. (Optional) **Additional Information**:\n"
             f"    - Attempt to fit the user-requested information into the predefined sections above, where relevant.\n"
-            f"    - If the information does not fit into ANY section, include ONLY that unfitted information here.\n"
-            f"    - Avoid including user-requested information in multiple sections. For example, if the user requests the company CEO's name, it should be mentioned ONLY in the **Leadership and Vision** section and not repeated here."
+            f"    - ONLY if the information does not fit into ANY section, include that unfitted information here.\n"
+            f"    - AVOID including user-requested information in multiple sections. For example, if the user requests that report includes the company CEO's name, it should be mentioned ONLY in the **Leadership and Vision** section and not repeated here."
             f"    - Present the information in well-structured paragraphs, not lists or bullet points.\n\n"
             )
 
         prompt += (
-            f"{'7' if state.include else '6'}. **Citations**:\n"
+            f"{'8' if state.include else '7'}. **Citations**:\n"
             f"    - Ensure every source cited in the report is listed in the text as Markdown hyperlinks.\n"
             f"    - Also include a list of all URLs as Markdown hyperlinks in this section.\n\n"
         )

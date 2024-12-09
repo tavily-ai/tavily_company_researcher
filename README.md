@@ -1,6 +1,6 @@
 # Tavily Company Research Agent
 
-This agent automates company research by leveraging Tavily to retrieve accurate, up-to-date data. It requires a company name and official website URL, where the URL serves as grounding data to ensure credible results. You can optionally use the "include" argument to specify a list of strings to include in the report, tailoring it to your specific needs. For example, you can request details such as "Company's CEO", "Location of Headquarters", or other specific information.
+This agent automates company research by leveraging Tavily to retrieve accurate, up-to-date data. You can also use the "include" argument to customize the report by providing a list of specific details you want to include. For example, you can request details such as "Company's CEO", "Location of Headquarters", or other specific information.
 
 ## Key Steps
 

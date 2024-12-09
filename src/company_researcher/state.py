@@ -16,16 +16,16 @@ class InputState(BaseModel):
     ),
     include: list[str] = Field(
         description=(
-            "A list specifying the types of information to include in the company research report. Examples include "
-            "company's official website URL, LinkedIn profile URL, location of headquarters, "
-            "number of employees, name of the CEO, and more."
+            "Optional list specifying information to include in the company research report, "
+            "such as the company's official website URL, LinkedIn profile URL, headquarters location, "
+            "number of employees, CEO's name, and more."
         ),
         examples=[
-            "official website",
-            "linkedin profile",
-            "headquarters",
-            "number of employees",
-            "CEO"
+            "Company's official website URL",
+            "Company's LinkedIn profile URL",
+            "Location of headquarters formatted as <city>, <state code> (e.g. San Francisco, CA)",
+            "Number of employees",
+            "Name of the CEO"
         ],
         default_factory=list
     )
