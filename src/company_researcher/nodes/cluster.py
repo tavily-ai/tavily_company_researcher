@@ -31,7 +31,7 @@ class ClusterAgent:
             f"- **Company Name**: '{state.company}'\n"
             f"- **Primary Domain**: '{target_domain}'\n"
             f"- **Initial Context (Ground Truth)**: Information below should act as a verification baseline. Use it to confirm that the document content aligns directly with {state.company}.\n"
-            f"- **{json.dumps(state.grounding_data)[:self.cfg.MAX_GROUND_LENGTH]}**\n\n"
+            f"- **{json.dumps(state.grounding_data)}**\n\n"
             f"### Retrieved Documents for Clustering\n"
             f"Below are the retrieved documents, including URLs and brief content snippets:\n"
             f"{[{'url': doc['url'], 'snippet': doc['content']} for doc in state.research_data.values()]}\n\n"
@@ -82,7 +82,7 @@ class ClusterAgent:
             print(prompt)
         try:
             messages = [SystemMessage(content=prompt)]
-            response = await self.cfg.model.with_structured_output(Clusters).ainvoke(messages)
+            response = await self.cfg.BASE_LLM.with_structured_output(Clusters).ainvoke(messages)
             clusters = response.clusters  # Access the structured clusters directly
             return clusters, ""
         except Exception as e:

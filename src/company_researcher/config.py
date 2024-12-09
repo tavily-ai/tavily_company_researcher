@@ -10,6 +10,7 @@ class Config:
         self.DEFAULT_CLUSTER_SIZE = 10
         self.RERANK_TIMEOUT = 3
         self.MAX_PROMPT_LENGTH = 350000
-        self.MAX_GROUND_LENGTH = 4000
-        self.model = ChatOpenAI(model="gpt-4o-mini", temperature=0.2, max_tokens=1000)
+        self.MAX_DOC_LENGTH = 8000
+        self.BASE_LLM = ChatOpenAI(model="gpt-4o-mini", temperature=0.2, max_tokens=2000)
+        self.FACTUAL_LLM = ChatOpenAI(model="gpt-4o-mini", temperature=0.0, max_tokens=2000)
         self.DEBUG = False

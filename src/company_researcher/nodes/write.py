@@ -8,13 +8,12 @@ class WriteAgent:
         self.utils = utils
 
     async def run(self, state):
-        report_title = f"{state.company.capitalize()} Company Report"
+        report_title = f"{state.company} Company Report"
         report_date = datetime.now().strftime('%B %d, %Y')
 
         prompt = (
             f"You are an expert company researcher tasked with writing a fact-based report on recent developments for the company **{state.company}**. "
-            # f"Write the report in Markdown format, but **do not include a title**. Each section must be written in well-structured paragraphs, not lists or bullet points.\n"
-            f"Write the report in Markdown format. Each section must be written in well-structured paragraphs, not lists or bullet points.\n"
+            f"Write the report in Markdown format. DO NOT change the titles. Each section must be written in well-structured paragraphs, not lists or bullet points.\n"
             f"Ensure the report includes:\n"
             f"- **Inline citations** as Markdown hyperlinks directly in the main sections (e.g., Company X is an innovative leader in AI ([LinkedIn](https://linkedin.com))).\n"
             f"- A **Citations Section** at the end that lists all URLs used.\n\n"
@@ -24,16 +23,17 @@ class WriteAgent:
             f"- If a required data point (e.g., employee count, financial figures) is not available in the provided documents, state that it is unavailable.\n"
             f"- As of today, **{report_date}**, prioritize the most recent and updated source in cases where conflicting data points or metrics are found.\n"
         )
+
         if state.include:
             prompt += (
-                f"- Include the following user-requested information in the report, if available: "
+                f"- Ensure the report includes the following user-requested information, if available: "
                 f"{', '.join(state.include)}.\n"
             )
 
         prompt += (
             "- Make sure to support specific data points and metrics included in the report with in-text Markdown hyperlink citations.\n\n"
             f"### Report Structure:\n"
-            f"Title: {report_title}\n"
+            f"Title (utilize the full company name): {report_title}\n"
             f"Date: {report_date}\n"
             f"1. **Executive Summary**:\n"
             f"    - High-level overview of the company, its services, location, employee count, and achievements.\n"
@@ -49,7 +49,18 @@ class WriteAgent:
             f"    - For startups: funding rounds, investors, and milestones.\n\n"
             f"5. **Recent Developments**:\n"
             f"    - New product enhancements, partnerships, competitive moves, or market entries.\n\n"
-            f"6. **Citations**:\n"
+        )
+        if state.include:
+            prompt += (
+            f"6. (Optional) **Additional Information**:\n"
+            f"    - Attempt to fit the user-requested information into the predefined sections above, where relevant.\n"
+            f"    - If the information does not fit into ANY section, include ONLY that unfitted information here.\n"
+            f"    - Avoid including user-requested information in multiple sections. For example, if the user requests the company CEO's name, it should be mentioned ONLY in the **Leadership and Vision** section and not repeated here."
+            f"    - Present the information in well-structured paragraphs, not lists or bullet points.\n\n"
+            )
+
+        prompt += (
+            f"{'7' if state.include else '6'}. **Citations**:\n"
             f"    - Ensure every source cited in the report is listed in the text as Markdown hyperlinks.\n"
             f"    - Also include a list of all URLs as Markdown hyperlinks in this section.\n\n"
         )
@@ -75,7 +86,7 @@ class WriteAgent:
                 f"### Documents to Base the Report On:\n"
                 f"#### Official Grounding Data:\n"
                 f"The following is official data sourced from the company's website and should be used as a primary reference:\n"
-                f"{grounding_data_content[:self.cfg.MAX_GROUND_LENGTH]}\n\n"
+                f"{grounding_data_content}\n\n"
                 f"#### Additional Research Data:\n"
                 f"Select and prioritize the most relevant sources to ensure alignment with the target company.\n"
                 f"{research_data_content}"
@@ -87,7 +98,7 @@ class WriteAgent:
 
         try:
             messages = [SystemMessage(content=prompt)]
-            response = await self.cfg.model.ainvoke(messages)
+            response = await self.cfg.FACTUAL_LLM.ainvoke(messages)
             report = response.content
             return {"report": report}
         except Exception as e:

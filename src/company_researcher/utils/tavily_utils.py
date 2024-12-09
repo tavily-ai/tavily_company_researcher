@@ -2,20 +2,27 @@ import asyncio
 from datetime import datetime
 from tavily import AsyncTavilyClient
 
+from company_researcher.config import Config
+cfg = Config()
+
 class Tavily:
     def __init__(self):
         self.client = AsyncTavilyClient()
 
-    async def extract(self, urls: list[str], sources_dict: dict, extract_depth="basic"):
+    async def extract(self, urls: list[str], sources_dict: dict, extract_depth="basic", use_cache=True):
         msg = ""
 
         async def process_batch(url_batch):
             batch_msg = ""
             try:
-                response = await self.client.extract(urls=url_batch, extract_depth=extract_depth)
+                response = await self.client.extract(urls=url_batch, extract_depth=extract_depth, use_cache=use_cache)
                 for itm in response['results']:
                     url = itm['url']
                     raw_content = itm['raw_content']
+                    if len(raw_content) > cfg.MAX_DOC_LENGTH:
+                        raw_content = raw_content[:cfg.MAX_DOC_LENGTH] + " [...]"
+                        if cfg.DEBUG:
+                            print(f"Content from {url} was truncated to the maximum allowed length ({cfg.MAX_DOC_LENGTH} characters). Current length: {len(raw_content)}\nPreview:\n{raw_content}")
                     if url in sources_dict:
                         sources_dict[url]['raw_content'] = raw_content
                     else:
@@ -54,7 +61,8 @@ class Tavily:
                 return tavily_response['results']
             except Exception as e:
                 # Handle any exceptions, log them, and return an empty list
-                print(f"Error occurred during search for query '{query}': {str(e)}")
+                if cfg.DEBUG:
+                    print(f"Error occurred during search for query '{query}': {str(e)}")
                 return []
 
         # Run all the search tasks in parallel
