@@ -7,7 +7,7 @@ class GroundAgent:
         msg = f"🔗 Initiating initial grounding for company '{state.company}'...\n"
         if self.cfg.DEBUG:
             print(msg)
-        grounding_data, extract_msg = await self.utils.tavily.extract([state.company_url], state.grounding_data, use_cache=False)
+        grounding_data, extract_msg = await self.utils.tavily.extract([state.company_url], state.grounding_data)
         if self.cfg.DEBUG:
             print(extract_msg)
         if not grounding_data:
