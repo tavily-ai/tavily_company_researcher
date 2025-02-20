@@ -8,14 +8,14 @@ cfg = Config()
 
 # Define Tavily's arguments to tailor the search results
 class TavilyQuery(BaseModel):
-    query: str = Field(description="web search query")
-    search_depth: str = Field(description="the depth of the search, available options: 'basic', 'advanced'")
-    time_range:  Optional[str] = Field(default=None, description="time range back from the current date to filter results, available options: 'day', 'week', 'month', 'year'")
+    query: str = Field(description="Web search query")
+    search_depth: str = Field(description="The depth of the search, available options: 'basic', 'advanced'")
+    time_range:  Optional[str] = Field(default=None, description="(Optional) Filters results by time range, useful when looking for sources like magazines and articles. Available options: 'day', 'week', 'month', 'year'.")
     include_domains: Optional[List[str]] = Field(default=None,
-                                         description="list of domains to include in the research. Useful when trying to gather information from trusted and relevant domains")
+                                         description="List of domains to include in the research. Useful when trying to gather information from trusted and relevant domains")
 
 class TavilySearchInput(BaseModel):
-    sub_queries: List[TavilyQuery] = Field(description="set of web search queries that can be answered in isolation")
+    sub_queries: List[TavilyQuery] = Field(description="Set of web search queries that can be answered in isolation")
 
 
 class Tavily:
