@@ -1,11 +1,7 @@
 from pydantic import BaseModel, Field
 from typing import List, Optional
 from langchain_core.messages import AnyMessage, AIMessage, SystemMessage, HumanMessage, ToolMessage
-
-
-class TavilySearchInput(BaseModel):
-    sub_queries: List[str] = Field(description="set of web search queries that can be answered in isolation")
-
+from company_researcher.utils.tavily_utils import TavilySearchInput, TavilyQuery
 
 class ResearchAgent:
     def __init__(self, cfg, utils):
@@ -62,11 +58,13 @@ class ResearchAgent:
             return response.sub_queries, msg
         except Exception as e:
             msg = f"🚫 An error occurred during search queries generation: {str(e)}"
-            return [f"Company {state.company}"], msg
+            return [TavilyQuery(query=f"Company {state.company}", search_depth="advanced")], msg
 
     async def run(self, state):
         sub_queries, msg = await self.generate_queries(state)
-        msg += "🔎 Tavily Searching ...\n" + "\n".join(f'"{query}"' for query in sub_queries)
+        sub_queries.append(TavilyQuery(query=f'{state.company} company', search_depth="advanced", include_domains=['linkedin.com/company']))
+        print(sub_queries)
+        msg += "🔎 Tavily Searching ...\n" + "\n".join(f'"{query.query}"' for query in sub_queries)
         if self.cfg.DEBUG:
             print(msg)
         research_data = await self.utils.tavily.search(sub_queries, state.research_data)

@@ -4,6 +4,7 @@ from langchain_core.messages import AnyMessage
 from langgraph.graph import add_messages
 
 from company_researcher.nodes.cluster import Cluster
+from company_researcher.utils.tavily_utils import TavilySearchInput, TavilyQuery
 
 class InputState(BaseModel):
     company: str = Field(
@@ -39,6 +40,6 @@ class ResearchState(InputState, OutputState):
     research_data: Dict[str, Dict[str, Union[str, float, None]]] = Field(default_factory=dict)
     clusters: List[Cluster] = Field(default_factory=list)
     chosen_cluster: int = Field(default_factory=int)
-    search_queries: List[str] = Field(default_factory=list)
+    search_queries: List[TavilyQuery] = Field(default_factory=list)
     messages: Annotated[List[AnyMessage], add_messages] = Field(default_factory=list)
 
